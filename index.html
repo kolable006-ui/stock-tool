@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新手股票工具｜交易成本 × 資金試算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1E3B; --navy2:#071528; --panel:#0F2750; --panel2:#112C5A;
+    --blue:#2D6CDF; --cyan:#38BDF8; --gold:#D7B26A; --goldb:#E4C77B;
+    --ice:#A9C4F2; --line:#274472; --txt:#EAF1FC; --muted:#8FB6F0;
+    --green:#3FBF8F; --line2:#06C755;
+    --num:'Sora','Noto Sans TC',sans-serif;
+    --body:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--body); color:var(--txt); min-height:100vh;
+    background:
+      radial-gradient(120% 80% at 85% 0%, rgba(45,108,223,.45), transparent 55%),
+      radial-gradient(90% 70% at 0% 100%, rgba(56,189,248,.20), transparent 50%),
+      linear-gradient(140deg,#0A1A33 0%,#0C2350 55%,#0E2C63 100%);
+    background-attachment:fixed; display:flex; align-items:flex-start; justify-content:center; padding:28px 16px 40px;}
+  .wrap{width:100%; max-width:520px; animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .badge{display:inline-block; background:#0E1726; color:#fff; font-weight:700; font-size:12px; letter-spacing:.5px; padding:7px 14px; border-radius:99px; margin-bottom:14px}
+  h1{font-family:var(--num); font-weight:800; font-size:26px; line-height:1.25; letter-spacing:.5px}
+  h1 .hl{color:var(--gold)}
+  .sub{color:var(--muted); font-size:13px; margin-top:7px; margin-bottom:22px}
+  .card{background:linear-gradient(180deg,rgba(15,39,80,.92),rgba(11,30,59,.92)); border:1px solid var(--line); border-radius:18px; padding:22px 18px; box-shadow:0 18px 50px -18px rgba(0,0,0,.7); backdrop-filter:blur(4px)}
+
+  /* gate */
+  .lock{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--blue),#1E4FA8); box-shadow:0 8px 22px -8px rgba(45,108,223,.8); margin-bottom:14px}
+  .lock svg{width:26px;height:26px;fill:#fff}
+  .gate h2{font-family:var(--num);font-weight:800;font-size:21px;line-height:1.3}
+  .gate .gsub{color:var(--muted);font-size:13px;margin-top:8px}
+  .perks{list-style:none;margin:18px 0 20px;display:grid;gap:10px}
+  .perks li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--txt)}
+  .perks .ck{flex:none;width:20px;height:20px;border-radius:99px;background:rgba(56,189,248,.18);display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .perks .ck svg{width:11px;height:11px;fill:var(--cyan)}
+  .perks .ck.g{background:rgba(6,199,85,.18)} .perks .ck.g svg{fill:var(--line2)}
+  .ff{margin-bottom:14px}
+  .ff label{display:block;font-size:12.5px;color:var(--ice);font-weight:500;margin:0 0 6px 2px}
+  .ff label .req{color:var(--gold)}
+  .ff input{width:100%;background:#0A1A33;border:1.5px solid var(--line);color:#fff;font-family:var(--body);
+    font-size:15px;border-radius:11px;padding:12px 14px;outline:none;transition:border-color .2s,box-shadow .2s}
+  .ff input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(56,189,248,.18)}
+  .ff input.err{border-color:#E0533D;box-shadow:0 0 0 3px rgba(224,83,61,.18)}
+  .consent{display:flex;gap:10px;align-items:flex-start;margin:4px 0 18px;font-size:12px;color:var(--muted);line-height:1.55}
+  .consent input{margin-top:2px;width:16px;height:16px;flex:none;accent-color:var(--blue)}
+  .consent a{color:var(--cyan);text-decoration:none}
+  .cta{width:100%;cursor:pointer;font-family:var(--body);font-weight:800;font-size:16px;color:#0A1A33;
+    background:linear-gradient(135deg,var(--goldb),var(--gold));border:none;border-radius:12px;padding:14px;
+    transition:transform .12s,box-shadow .2s;box-shadow:0 10px 24px -10px rgba(215,178,106,.8)}
+  .cta:hover{transform:translateY(-1px)}
+  .cta:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  .formnote{font-size:11px;color:#7E97BE;text-align:center;margin-top:12px;line-height:1.6}
+  .err-msg{display:none;color:#F09B8C;font-size:12.5px;margin-top:10px;text-align:center}
+  .err-msg.show{display:block}
+
+  /* tool */
+  #tool{display:none}
+  #tool.show{display:block;animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+  .guide{display:none;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;
+    margin-bottom:18px;padding:13px 16px;border-radius:12px;color:#0A1A33;font-weight:800;font-size:14px;
+    background:linear-gradient(135deg,var(--goldb),var(--gold));box-shadow:0 10px 24px -10px rgba(215,178,106,.8);
+    transition:transform .12s}
+  .guide:hover{transform:translateY(-1px)}
+  .guide .garr{font-size:18px}
+  .secttl{font-family:var(--num);font-weight:800;font-size:16px;color:var(--ice);margin:26px 0 14px;display:flex;align-items:center;gap:8px}
+  .secttl .n{width:22px;height:22px;border-radius:99px;background:var(--blue);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none}
+  .field{margin-bottom:18px}
+  label.l{display:block;font-size:13px;color:var(--ice);font-weight:500;margin:0 0 8px 2px}
+  .pricebox{position:relative}
+  .pricebox .unit{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px}
+  input.num{width:100%;background:#0A1A33;border:1.5px solid var(--line);color:#fff;font-family:var(--num);
+    font-weight:700;font-size:22px;border-radius:12px;padding:14px 16px 14px 42px;outline:none;transition:border-color .2s,box-shadow .2s;-moz-appearance:textfield}
+  input.num::-webkit-outer-spin-button,input.num::-webkit-inner-spin-button{-webkit-appearance:none}
+  input.num:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(56,189,248,.18)}
+  .small input.num{font-size:17px;padding:11px 14px}
+  input.num.np{padding-left:16px}
+  .hint{font-size:11px;color:var(--muted);margin:6px 0 0 2px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1 1 auto;min-width:62px;cursor:pointer;font-family:var(--body);font-weight:700;font-size:13px;
+    color:var(--ice);background:#0A1A33;border:1.5px solid var(--line);border-radius:10px;padding:10px 6px;transition:all .15s}
+  .seg button:hover{border-color:var(--blue)}
+  .seg button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .seg.gold button.on{background:var(--gold);border-color:var(--gold);color:#0A1A33}
+  .custom{display:none;margin-top:8px}
+  .custom.show{display:block}
+  .duo{display:flex;gap:10px}.duo>div{flex:1}
+  .result{margin-top:6px;border:1.25px solid var(--gold);border-radius:16px;background:linear-gradient(180deg,rgba(17,44,90,.7),rgba(7,21,40,.7));padding:18px 18px 16px;position:relative;overflow:hidden}
+  .result.blue{border-color:var(--cyan)}
+  .result::before{content:"";position:absolute;right:-40px;top:-40px;width:140px;height:140px;background:radial-gradient(circle,rgba(56,189,248,.25),transparent 70%);pointer-events:none}
+  .reslabel{font-size:13px;color:var(--ice)}
+  .big{font-family:var(--num);font-weight:800;color:var(--goldb);font-size:46px;line-height:1.1;letter-spacing:.5px;transition:transform .18s}
+  .big.cy{color:var(--cyan);font-size:40px}
+  .big small{font-size:18px;color:var(--gold);font-weight:700;margin-left:4px}
+  .big.cy small{color:var(--cyan)}
+  .pulse{transform:scale(1.04)}
+  .breakeven{margin-top:6px;font-size:13.5px;color:var(--txt)}
+  .breakeven b{color:var(--cyan)}
+  .rows{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px;display:grid;gap:10px}
+  .row{display:flex;align-items:center;justify-content:space-between;font-size:14px}
+  .row .k{color:var(--ice);display:flex;align-items:center;gap:8px}
+  .row .dot{width:8px;height:8px;border-radius:99px;flex:none}
+  .row .v{font-family:var(--num);font-weight:700}
+  .v.pos{color:var(--green)} .v.neg{color:#F09B8C}
+  .tot{border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
+  .tot .k{color:#fff;font-weight:700;font-size:15px}
+  .tot .v{color:var(--goldb);font-size:18px}
+  .flag{font-size:11px;color:var(--gold);margin-top:6px;display:none}
+  .flag.show{display:block}
+  .hist{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px;display:none}
+  .hist.show{display:block}
+  .histhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .histhd span{font-size:13px;font-weight:700;color:var(--ice)}
+  .histhd button{background:none;border:1px solid var(--line);color:var(--muted);font-family:var(--body);
+    font-size:11px;border-radius:8px;padding:4px 10px;cursor:pointer;transition:all .15s}
+  .histhd button:hover{border-color:var(--blue);color:var(--ice)}
+  .hitem{display:flex;align-items:center;justify-content:space-between;font-size:13px;padding:8px 10px;
+    background:#0A1A33;border:1px solid var(--line);border-radius:9px;margin-bottom:6px}
+  .hitem .ht{color:var(--txt)}
+  .hitem .ht b{color:#fff}
+  .hitem .hr{font-family:var(--num);font-weight:700;color:var(--goldb)}
+  .hitem .htime{color:var(--muted);font-size:10.5px;margin-left:8px}
+  .hempty{font-size:12px;color:var(--muted);padding:4px 2px}
+  .note{font-size:11.5px;color:var(--muted);margin-top:16px;line-height:1.6}
+  .disc{font-size:11px;color:#7E97BE;margin-top:14px;line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+  /* LINE CTA */
+  .linecta{margin-top:24px;border:1.25px solid var(--line2);border-radius:16px;
+    background:linear-gradient(180deg,rgba(6,199,85,.12),rgba(7,21,40,.5));padding:20px 18px}
+  .linecta h3{font-family:var(--num);font-weight:800;font-size:18px;color:#fff;line-height:1.35}
+  .linecta h3 .y{color:var(--goldb)}
+  .steps{list-style:none;margin:14px 0;display:grid;gap:9px}
+  .steps li{display:flex;gap:10px;font-size:13.5px;color:var(--txt);align-items:flex-start}
+  .steps .sn{flex:none;width:20px;height:20px;border-radius:99px;background:var(--line2);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .code{display:inline-block;font-family:var(--num);font-weight:800;color:var(--goldb);font-size:16px;letter-spacing:1px;
+    background:#0A1A33;border:1px dashed var(--gold);border-radius:8px;padding:2px 10px}
+  .lbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;cursor:pointer;text-decoration:none;
+    font-family:var(--body);font-weight:800;font-size:16px;color:#fff;background:var(--line2);border:none;border-radius:12px;
+    padding:14px;box-shadow:0 10px 24px -10px rgba(6,199,85,.8);transition:transform .12s}
+  .lbtn:hover{transform:translateY(-1px)}
+  .copybtn{width:100%;margin-top:9px;cursor:pointer;font-family:var(--body);font-weight:700;font-size:14px;color:var(--ice);
+    background:#0A1A33;border:1.5px solid var(--line);border-radius:11px;padding:11px;transition:all .15s}
+  .copybtn:hover{border-color:var(--gold);color:var(--goldb)}
+  .foot{text-align:center;color:#5E7AAE;font-size:11px;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge">給小白 ‧ 交易成本 × 資金試算</span>
+  <h1>第一次買股票，<span class="hl">先把帳算清楚</span></h1>
+  <p class="sub">輸入股價，算出買賣成本、回本門檻，再用你的預算試算能買多少、最多會賠多少。</p>
+
+  <!-- ===== GATE ===== -->
+  <div class="card gate" id="gate">
+    <div class="lock"><svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3zm-3 5a2 2 0 0 1 1 3.7V21h-2v-3.3A2 2 0 0 1 12 14z"/></svg></div>
+    <h2>解鎖「新手股票試算工具」</h2>
+    <p class="gsub">留下聯絡方式，立即免費使用，並解鎖領取 100 萬模擬本金的方式。</p>
+    <ul class="perks">
+      <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span>免費解鎖：交易成本速算 ＋ 資金部位試算</li>
+      <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span>領取「第一次買股票」完整懶人包</li>
+      <li><span class="ck g"><svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></span>加 LINE 並輸入推廣碼，多領 <b>100 萬</b>模擬交易本金</li>
+    </ul>
+    <form id="leadform" novalidate>
+      <div class="ff"><label>本名 <span class="req">*</span></label><input id="lname" type="text" autocomplete="name" placeholder="請填真實姓名" required></div>
+      <div class="ff"><label>Email <span class="req">*</span></label><input id="lemail" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+      <div class="ff"><label>手機 <span class="req">*</span></label><input id="lphone" type="tel" autocomplete="tel" inputmode="numeric" placeholder="09xxxxxxxx" required></div>
+      <label class="consent"><input id="lconsent" type="checkbox">
+        <span>我同意提供上述資料、並記錄我在本工具中的查詢內容，作為與我聯繫、提供投資理財資訊及優化服務之用，且已了解可隨時來信要求停止使用或刪除。<a href="#" id="privlink">隱私權說明</a></span></label>
+      <button class="cta" id="unlock" type="submit">免費解鎖工具 →</button>
+      <div class="err-msg" id="errmsg"></div>
+      <p class="formnote">我們重視你的隱私，不會把資料提供給第三方。</p>
+    </form>
+  </div>
+
+  <!-- ===== TOOL ===== -->
+  <div class="card" id="tool">
+    <a class="guide" id="guideBanner" href="#" target="_blank" rel="noopener">
+      <span>📕 已解鎖！點此領取完整「第一次買股票」懶人包</span><span class="garr">↓</span>
+    </a>
+
+    <!-- 共用：股價 -->
+    <div class="field pricebox">
+      <label class="l">股價（每股，元）</label><span class="unit">$</span>
+      <input id="price" class="num" type="number" inputmode="decimal" value="100" min="0" step="0.5">
+    </div>
+
+    <!-- 區塊 1：交易成本 -->
+    <div class="secttl"><span class="n">1</span>買賣一趟要付多少成本？</div>
+    <div class="field">
+      <label class="l">交易單位</label>
+      <div class="seg" id="unitseg">
+        <button data-u="lot" class="on">整張（1000 股）</button>
+        <button data-u="odd">零股（自訂股數）</button>
+      </div>
+    </div>
+    <div class="field small">
+      <label class="l" id="qtyLabel">張數　<span style="color:var(--muted);font-weight:400">（1 張 = 1000 股）</span></label>
+      <input id="lots" class="num" type="number" inputmode="numeric" value="1" min="1" step="1">
+      <div class="hint" id="qtyHint" style="display:none">零股低消各券商不同（常見 20 元，部分券商 1 元起），此處以 20 元估算，實際以你的券商為準。</div>
+    </div>
+    <div class="field">
+      <label class="l">手續費折扣（電子下單常見有折扣）</label>
+      <div class="seg" id="discseg">
+        <button data-d="1" class="on">無折扣</button><button data-d="0.6">6 折</button>
+        <button data-d="0.5">5 折</button><button data-d="0.28">2.8 折</button><button data-d="custom">自訂</button>
+      </div>
+      <div class="custom small" id="customwrap">
+        <input id="customd" class="num" type="number" inputmode="decimal" placeholder="輸入折數，例如 6.5" min="0.1" max="10" step="0.1">
+        <div class="hint">輸入「折數」：6.5 折就打 6.5，越小越便宜</div>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:20px">
+      <label class="l">標的類型（影響證交稅）</label>
+      <div class="seg gold" id="typeseg">
+        <button data-t="0.003" class="on">一般股票</button><button data-t="0.001">ETF</button><button data-t="0.0015">現股當沖</button>
+      </div>
+    </div>
+    <div class="result">
+      <div class="reslabel">一買一賣，總成本約</div>
+      <div class="big" id="total">— <small>元</small></div>
+      <div class="breakeven">股價約需上漲 <b id="bep">—</b>，到 <b id="bepPrice">—</b> 才回本。</div>
+      <div class="rows">
+        <div class="row"><span class="k"><span class="dot" style="background:var(--blue)"></span>買進手續費</span><span class="v" id="buyFee">—</span></div>
+        <div class="row"><span class="k"><span class="dot" style="background:var(--cyan)"></span>賣出手續費</span><span class="v" id="sellFee">—</span></div>
+        <div class="row"><span class="k"><span class="dot" style="background:var(--gold)"></span><span id="taxName">證交稅（賣出）</span></span><span class="v" id="tax">—</span></div>
+        <div class="row tot"><span class="k">合計成本</span><span class="v" id="totRow">—</span></div>
+      </div>
+      <div class="flag" id="minflag">＊手續費已套用最低 20 元（低消）。</div>
+    </div>
+
+    <!-- 區塊 2：資金試算 -->
+    <div class="secttl"><span class="n">2</span>用我的預算，該買多少、最多賠多少？</div>
+    <div class="field">
+      <label class="l">想投入的預算（元）</label>
+      <input id="budget" class="num np" type="number" inputmode="numeric" value="30000" min="0" step="1000">
+    </div>
+    <div class="field small">
+      <label class="l">你設定的目標價 / 停損價（選填，自己決定）</label>
+      <div class="duo">
+        <div><input id="mTarget" class="num np" type="number" inputmode="decimal" placeholder="目標價" min="0" step="0.5"></div>
+        <div><input id="mStop" class="num np" type="number" inputmode="decimal" placeholder="停損價" min="0" step="0.5"></div>
+      </div>
+      <div class="hint">本工具不推薦個股、不替你決定價格；這兩個數字由你自己設定。</div>
+    </div>
+    <div class="result blue">
+      <div class="reslabel">用這筆預算，目前股價可買約</div>
+      <div class="big cy" id="mShares">— <small>股</small></div>
+      <div class="breakeven">約 <b id="mLots">—</b> 張，需投入 <b id="mCost">—</b>。</div>
+      <div class="rows">
+        <div class="row"><span class="k"><span class="dot" style="background:var(--green)"></span>達你的目標價賺</span><span class="v" id="mGain">—</span></div>
+        <div class="row"><span class="k"><span class="dot" style="background:#F09B8C"></span>觸你的停損價賠</span><span class="v" id="mLoss">—</span></div>
+        <div class="row tot"><span class="k">風險報酬比（目標 / 停損）</span><span class="v" id="mRR">—</span></div>
+      </div>
+      <div class="flag show" id="mNote" style="color:var(--muted)">填入目標價與停損價，即可看到潛在賺賠與風險比。</div>
+    </div>
+
+    <div class="hist" id="hist">
+      <div class="histhd"><span>你的查詢紀錄</span><button id="clearHist" type="button">清除</button></div>
+      <div id="histlist"></div>
+    </div>
+
+    <!-- LINE 100萬 CTA -->
+    <div class="linecta">
+      <h3>📈 算完了？免費領 <span class="y">100 萬</span>模擬本金實際練一次</h3>
+      <ul class="steps">
+        <li><span class="sn">1</span><span>加入 LINE 好友 <b id="lineIdText">@388cmtan</b></span></li>
+        <li><span class="sn">2</span><span>依指示完成模擬倉註冊</span></li>
+        <li><span class="sn">3</span><span>輸入推廣碼 <span class="code" id="promoText">XLINRJ</span>，多領 <b>100 萬</b>模擬交易本金</span></li>
+      </ul>
+      <a class="lbtn" id="lineBtn" href="#" target="_blank" rel="noopener">💬 加入 LINE 好友領本金</a>
+      <button class="copybtn" id="copyBtn" type="button">📋 複製推廣碼 XLINRJ</button>
+    </div>
+
+    <p class="note">成本算法：成交金額 = 股價 × 股數；手續費 = 成交金額 × 0.1425% × 折扣（最低 20 元），買、賣各一次；證交稅僅在賣出時收（股票 0.3%、ETF 0.1%、現股當沖 0.15%）。資金試算：可買股數 = 預算 ÷ 股價（無條件捨去），潛在賺賠與風險比皆依你自己設定的目標價、停損價計算。</p>
+    <p class="disc">免責聲明：本工具僅供教育與資訊參考，<b>不構成投資建議或任何證券買賣推薦</b>，也不推薦任何特定股票。各券商手續費低消與計算方式可能略有差異，實際費用以你的券商與主管機關最新公告為準；投資有風險，請自行評估審慎判斷。</p>
+  </div>
+  <p class="foot">第一次買股票・新手攻略</p>
+</div>
+
+<script>
+/* =========================================================================
+   【設定區】
+   ── 名單 / 查詢紀錄送到 Google 試算表（搭配附的 google-apps-script.gs）──
+   1) 部署 Apps Script 後會給你一個 .../exec 網址。
+   2) 把那個網址同時貼到 ENDPOINT 與 LOG_ENDPOINT（兩個貼同一個）。
+   3) PROVIDER 設為 "gas"。
+   ENDPOINT 留空＝展示模式（直接解鎖、資料不送出）。
+   ── LINE 模擬倉推廣 ──
+   下面 LINE_ID / PROMO_CODE / LINE_URL 改成你的即可。
+   ── 懶人包 ── GUIDE_URL 填你的 PDF 網址，留空＝不顯示領取按鈕。
+   ========================================================================= */
+var ENDPOINT     = "https://script.google.com/macros/s/AKfycbwhpcECWVBwFNidavR3dgn6iPkBICbKDmumINY64eQtYLPaojbhJoVtN6bhLbMb_3NcJQ/exec";  // Google Apps Script /exec 網址
+var PROVIDER     = "gas";              // "gas"｜"formspree"｜"json"
+var LOG_ENDPOINT = "https://script.google.com/macros/s/AKfycbwhpcECWVBwFNidavR3dgn6iPkBICbKDmumINY64eQtYLPaojbhJoVtN6bhLbMb_3NcJQ/exec";  // 查詢紀錄網址（與 ENDPOINT 相同）
+var GUIDE_URL    = "";                 // ← 懶人包 PDF 網址（選填）
+
+var LINE_ID    = "@388cmtan";          // 模擬倉 LINE 機器人 ID
+var PROMO_CODE = "XLINRJ";             // 推廣碼（領 100 萬模擬本金）
+var LINE_URL   = "https://line.me/R/ti/p/%40388cmtan"; // 加好友連結（%40 = @）
+
+var STORE_KEY = "stocktool_unlocked_v1";
+var LEAD_KEY  = "stocktool_lead_v1";
+var HIST_KEY  = "stocktool_hist_v1";
+
+(function(){
+  var gate=document.getElementById('gate'), tool=document.getElementById('tool'),
+      form=document.getElementById('leadform'), btn=document.getElementById('unlock'),
+      email=document.getElementById('lemail'), name=document.getElementById('lname'),
+      phone=document.getElementById('lphone'), consent=document.getElementById('lconsent'),
+      errmsg=document.getElementById('errmsg');
+
+  /* LINE CTA 套用設定 */
+  document.getElementById('lineIdText').textContent=LINE_ID;
+  document.getElementById('promoText').textContent=PROMO_CODE;
+  document.getElementById('lineBtn').href=LINE_URL;
+  document.getElementById('lineBtn').textContent='💬 加入 LINE 好友 '+LINE_ID;
+  document.getElementById('copyBtn').textContent='📋 複製推廣碼 '+PROMO_CODE;
+  document.getElementById('copyBtn').addEventListener('click',function(){
+    try{ if(navigator.clipboard) navigator.clipboard.writeText(PROMO_CODE); }catch(e){}
+    this.textContent='✅ 已複製 '+PROMO_CODE;
+  });
+
+  function remembered(){ try{return localStorage.getItem(STORE_KEY)==='1';}catch(e){return false;} }
+  function remember(){ try{localStorage.setItem(STORE_KEY,'1');}catch(e){} }
+  var LEAD={};
+  try{ LEAD=JSON.parse(localStorage.getItem(LEAD_KEY)||'{}'); }catch(e){ LEAD={}; }
+  function saveLead(o){ LEAD=o; try{localStorage.setItem(LEAD_KEY,JSON.stringify(o));}catch(e){} }
+  function reveal(){ gate.style.display='none'; tool.classList.add('show');
+    if(GUIDE_URL){ var gb=document.getElementById('guideBanner'); gb.href=GUIDE_URL; gb.style.display='flex'; }
+    initCalc(); }
+
+  if(remembered()) reveal();
+
+  function showErr(m){ errmsg.textContent=m; errmsg.classList.add('show'); }
+  function clearErr(){ errmsg.classList.remove('show'); }
+  function validEmail(v){
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return false;
+    var bad=['mailinator.com','10minutemail.com','guerrillamail.com','tempmail.com','temp-mail.org',
+      'yopmail.com','sharklasers.com','trashmail.com','getnada.com','dispostable.com','fakeinbox.com',
+      'maildrop.cc','mailnesia.com','throwawaymail.com','example.com','test.com'];
+    return bad.indexOf(v.split('@')[1].toLowerCase())===-1;
+  }
+  function validName(v){
+    v=v.trim();
+    if(v.length<2) return false;
+    if(!/[A-Za-z一-鿿]/.test(v)) return false;
+    if(/^(.)\1+$/.test(v)) return false;
+    var junk=['test','測試','asdf','qwer','aaaa','abcd','1234','你好','哈哈','沒有','xxxx'];
+    if(junk.indexOf(v.toLowerCase())>-1) return false;
+    return true;
+  }
+  function validPhone(v){
+    var d=(v||'').replace(/\D/g,'');
+    if(!/^09\d{8}$/.test(d)) return false;
+    if(/^09(\d)\1{7}$/.test(d)) return false;
+    return d;
+  }
+
+  document.getElementById('privlink').addEventListener('click',function(e){e.preventDefault();
+    alert('我們會蒐集你的聯絡資料（姓名、Email、手機），以及你在本工具中的查詢內容（如股價、標的類型與試算結果），用於與你聯繫、提供投資理財資訊與優化服務，不提供給第三方。你可隨時來信要求停止使用或刪除個人資料。');});
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault(); clearErr();
+    name.classList.remove('err'); email.classList.remove('err'); phone.classList.remove('err');
+    if(!validName(name.value)){ name.classList.add('err'); showErr('請填寫真實姓名（至少 2 個字，勿用數字或符號）。'); name.focus(); return; }
+    if(!validEmail(email.value.trim())){ email.classList.add('err'); showErr('請輸入正確且可收信的 Email（不接受免洗信箱）。'); email.focus(); return; }
+    var pn=validPhone(phone.value);
+    if(!pn){ phone.classList.add('err'); showErr('請輸入正確的台灣手機號碼（09 開頭，共 10 碼）。'); phone.focus(); return; }
+    if(!consent.checked){ showErr('請勾選同意，才能解鎖工具。'); return; }
+
+    btn.disabled=true; btn.textContent='處理中…';
+    var payload={kind:'lead', name:name.value.trim(), email:email.value.trim(), phone:pn,
+      promo:PROMO_CODE, source:'新手股票工具(合併版)', time:new Date().toISOString()};
+    saveLead(payload);
+
+    function done(){ remember(); btn.textContent='已解鎖 ✓'; reveal(); }
+
+    if(!ENDPOINT){ console.warn('[展示模式] 尚未設定 ENDPOINT，資料未送出：',payload); setTimeout(done,300); return; }
+    if(PROVIDER==='gas'){
+      fetch(ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(payload)}).then(done).catch(done);
+      return;
+    }
+    var opts;
+    if(PROVIDER==='formspree'){
+      var fd=new FormData(); Object.keys(payload).forEach(function(k){fd.append(k,payload[k]);});
+      opts={method:'POST',headers:{'Accept':'application/json'},body:fd};
+    }else{
+      opts={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)};
+    }
+    fetch(ENDPOINT,opts).then(function(r){ if(r.ok||r.status===0){done();}else{throw new Error('bad');} })
+      .catch(function(){ btn.disabled=false; btn.textContent='免費解鎖工具 →'; showErr('送出失敗，請稍後再試或檢查網路。'); });
+  });
+
+  /* ---------- calculator ---------- */
+  function initCalc(){
+    if(initCalc._done) return; initCalc._done=true;
+    var price=document.getElementById('price'),lots=document.getElementById('lots'),
+        customd=document.getElementById('customd'),customwrap=document.getElementById('customwrap'),
+        discseg=document.getElementById('discseg'),typeseg=document.getElementById('typeseg'),
+        unitseg=document.getElementById('unitseg'),qtyLabel=document.getElementById('qtyLabel'),qtyHint=document.getElementById('qtyHint'),
+        budget=document.getElementById('budget'),mTarget=document.getElementById('mTarget'),mStop=document.getElementById('mStop');
+    var disc=1, taxRate=0.003, typeLabel='一般股票', unit='lot';
+    var hist=[]; try{hist=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}catch(e){hist=[];}
+    var histEl=document.getElementById('hist'), listEl=document.getElementById('histlist');
+    var logTimer=null, lastKey='';
+    function discLabel(d){ d=Number(d); return d===1?'無折扣':(Math.round(d*100)/10)+' 折'; }
+    function hhmm(ts){ var dt=new Date(ts); return ('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2); }
+    function renderHist(){
+      histEl.classList.toggle('show', hist.length>0);
+      if(!hist.length){ listEl.innerHTML='<div class="hempty">還沒有紀錄，試算一筆就會出現在這裡。</div>'; return; }
+      listEl.innerHTML = hist.slice(0,8).map(function(h){
+        return '<div class="hitem"><span class="ht"><b>'+h.price+' 元</b>・'+h.type+'　<span style="color:var(--muted)">'+h.discLabel+'</span></span>'+
+               '<span><span class="hr">'+h.total.toLocaleString('en-US')+' 元</span><span class="htime">'+hhmm(h.time)+'</span></span></div>';
+      }).join('');
+    }
+    function saveHist(){ try{localStorage.setItem(HIST_KEY,JSON.stringify(hist.slice(0,30)));}catch(e){} }
+    function sendLog(rec){
+      if(!LOG_ENDPOINT) return;
+      try{ fetch(LOG_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,
+        body:JSON.stringify(Object.assign({kind:'query',email:LEAD.email||'',name:LEAD.name||'',phone:LEAD.phone||''},rec))}); }catch(e){}
+    }
+    function scheduleLog(rec,key){
+      if(logTimer)clearTimeout(logTimer);
+      logTimer=setTimeout(function(){
+        if(key===lastKey)return; lastKey=key;
+        hist.unshift(rec); if(hist.length>30)hist.pop();
+        renderHist(); saveHist(); sendLog(rec);
+      },1200);
+    }
+    document.getElementById('clearHist').addEventListener('click',function(){ hist=[]; lastKey=''; saveHist(); renderHist(); });
+    renderHist();
+    function fmt(n){return n.toLocaleString('en-US');}
+
+    function calcMoney(){
+      var p=parseFloat(price.value)||0, b=parseFloat(budget.value)||0;
+      var tg=parseFloat(mTarget.value), st=parseFloat(mStop.value);
+      var shares=(p>0&&b>0)?Math.floor(b/p):0, cost=shares*p;
+      document.getElementById('mShares').innerHTML = shares>0? fmt(shares)+' <small>股</small>':'— <small>股</small>';
+      document.getElementById('mLots').textContent = shares>0? (shares/1000).toFixed(2):'—';
+      document.getElementById('mCost').textContent = shares>0? fmt(Math.round(cost))+' 元':'—';
+      var gEl=document.getElementById('mGain'), lEl=document.getElementById('mLoss'), rEl=document.getElementById('mRR'), nEl=document.getElementById('mNote');
+      gEl.className='v'; lEl.className='v';
+      if(shares>0 && tg>0){ var g=(tg-p)*shares, gp=(tg-p)/p*100;
+        gEl.textContent=(g>=0?'+':'')+fmt(Math.round(g))+' 元 ('+(gp>=0?'+':'')+gp.toFixed(1)+'%)'; gEl.classList.add(g>=0?'pos':'neg'); }
+      else gEl.textContent='—';
+      var lossPct=null;
+      if(shares>0 && st>0){ var ls=(p-st)*shares; lossPct=b>0?ls/b*100:null;
+        lEl.textContent='-'+fmt(Math.round(ls))+' 元'+(lossPct!=null?'（佔預算 '+lossPct.toFixed(1)+'%）':''); lEl.classList.add('neg'); }
+      else lEl.textContent='—';
+      if(shares>0 && tg>0 && st>0 && (p-st)>0){ rEl.textContent=((tg-p)/(p-st)).toFixed(2)+' : 1'; }
+      else rEl.textContent='—';
+      if(lossPct!=null){
+        nEl.textContent = lossPct>2
+          ? '⚠️ 此設定下單筆潛在虧損約佔預算 '+lossPct.toFixed(1)+'%，高於常見「單筆風險 ≤ 2%」的資金控管原則，可考慮減少股數或調整停損（通用知識，非建議）。'
+          : '✓ 此設定下單筆潛在虧損約佔預算 '+lossPct.toFixed(1)+'%，在常見「單筆風險 ≤ 2%」原則內。';
+      } else {
+        nEl.textContent='填入目標價與停損價，即可看到潛在賺賠與風險比。所有價格由你自己決定。';
+      }
+    }
+
+    function calc(){
+      var p=parseFloat(price.value)||0, q=Math.max(parseInt(lots.value)||0,0);
+      var shares=(unit==='lot')?q*1000:q;
+      var amount=p*shares, d=disc;
+      if(d==='custom'){var c=parseFloat(customd.value); d=(c>0)?c/10:1;}
+      var buy=0,sell=0,tax=0,total=0,bep=0,bepP=0,hit=false;
+      if(amount>0){
+        var raw=Math.floor(amount*0.001425*d);
+        buy=Math.max(raw,20); sell=Math.max(raw,20); if(raw<20)hit=true;
+        tax=Math.floor(amount*taxRate); total=buy+sell+tax;
+        bep=total/amount*100; bepP=p*(1+total/amount);
+      }
+      document.getElementById('buyFee').textContent = amount>0? fmt(buy)+' 元':'—';
+      document.getElementById('sellFee').textContent= amount>0? fmt(sell)+' 元':'—';
+      document.getElementById('tax').textContent    = amount>0? fmt(tax)+' 元':'—';
+      document.getElementById('totRow').textContent = amount>0? fmt(total)+' 元':'—';
+      document.getElementById('bep').textContent    = amount>0? bep.toFixed(2)+'%':'—';
+      document.getElementById('bepPrice').textContent= amount>0? fmt(Math.round(bepP*100)/100)+' 元':'—';
+      var big=document.getElementById('total');
+      big.innerHTML = amount>0? fmt(total)+' <small>元</small>' : '— <small>元</small>';
+      document.getElementById('minflag').classList.toggle('show',hit);
+      big.classList.remove('pulse'); void big.offsetWidth; big.classList.add('pulse');
+      calcMoney();
+      if(amount>0){
+        var qtyText=(unit==='lot')?(q+' 張'):(q+' 股');
+        scheduleLog({price:p,lots:qtyText,discLabel:discLabel(d),type:typeLabel,total:total,breakeven:bep.toFixed(2)+'%',time:Date.now()}, p+'|'+unit+'|'+q+'|'+d+'|'+taxRate);
+      }
+    }
+    unitseg.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+      [].forEach.call(unitseg.children,function(x){x.classList.remove('on')});b.classList.add('on');
+      unit=b.dataset.u;
+      if(unit==='odd'){ qtyLabel.innerHTML='股數　<span style="color:var(--muted);font-weight:400">（可少於 1000 股）</span>'; qtyHint.style.display='block'; lots.value='100'; }
+      else{ qtyLabel.innerHTML='張數　<span style="color:var(--muted);font-weight:400">（1 張 = 1000 股）</span>'; qtyHint.style.display='none'; lots.value='1'; }
+      calc();});
+    discseg.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+      [].forEach.call(discseg.children,function(x){x.classList.remove('on')});b.classList.add('on');
+      disc=b.dataset.d; customwrap.classList.toggle('show',disc==='custom'); calc();});
+    typeseg.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+      [].forEach.call(typeseg.children,function(x){x.classList.remove('on')});b.classList.add('on');
+      taxRate=parseFloat(b.dataset.t);
+      typeLabel=(taxRate===0.001?'ETF':taxRate===0.0015?'當沖':'一般股票');
+      document.getElementById('taxName').textContent=(taxRate===0.001?'證交稅・ETF（賣出）':taxRate===0.0015?'證交稅・當沖（賣出）':'證交稅（賣出）');calc();});
+    [price,lots,customd].forEach(function(el){el.addEventListener('input',calc)});
+    [budget,mTarget,mStop].forEach(function(el){el.addEventListener('input',calcMoney)});
+    calc();
+  }
+})();
+</script>
+</body>
+</html>
