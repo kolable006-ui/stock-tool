@@ -25,6 +25,11 @@
     background-attachment:fixed; display:flex; align-items:flex-start; justify-content:center; padding:28px 16px 40px;}
   .wrap{width:100%; max-width:520px; animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
   @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .hero{display:block;width:100%;border-radius:16px;margin-bottom:16px;
+    border:1px solid var(--line);box-shadow:0 18px 50px -18px rgba(0,0,0,.7)}
+  .trust{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .trust span{font-size:12px;color:var(--ice);background:rgba(56,189,248,.10);
+    border:1px solid var(--line);border-radius:99px;padding:6px 12px;display:flex;align-items:center;gap:5px}
   .badge{display:inline-block; background:#0E1726; color:#fff; font-weight:700; font-size:12px; letter-spacing:.5px; padding:7px 14px; border-radius:99px; margin-bottom:14px}
   h1{font-family:var(--num); font-weight:800; font-size:26px; line-height:1.25; letter-spacing:.5px}
   h1 .hl{color:var(--gold)}
@@ -152,6 +157,12 @@
 </head>
 <body>
 <div class="wrap">
+  <img class="hero" src="hero.jpg" alt="新手買股全攻略：選券商 × 開戶 × 算成本，不報明牌、不誇大">
+  <div class="trust">
+    <span>🔒 資料僅供聯絡，絕不販售第三方</span>
+    <span>🚫 不報明牌・不誇大</span>
+    <span>✅ 免費・可隨時退訂</span>
+  </div>
   <span class="badge">給小白 ‧ 新手股票試算工具</span>
   <h1>第一次買股票，<span class="hl">先把帳算清楚</span></h1>
   <p class="sub">輸入股價，算出買賣成本、回本門檻，再用你的預算試算能買多少、最多會賠多少。</p>
