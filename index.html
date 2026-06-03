@@ -208,7 +208,7 @@
     <div class="field small">
       <label class="l" id="qtyLabel">張數　<span style="color:var(--muted);font-weight:400">（1 張 = 1000 股）</span></label>
       <input id="lots" class="num" type="number" inputmode="numeric" value="1" min="1" step="1">
-      <div class="hint" id="qtyHint" style="display:none">零股低消各券商不同（常見 20 元，部分券商 1 元起），此處以 20 元估算，實際以你的券商為準。</div>
+      <div class="hint" id="qtyHint" style="display:none">零股低消各券商不同，此處以較常見的 1 元低消估算；實際金額以你的券商公告為準。</div>
     </div>
     <div class="field">
       <label class="l">手續費折扣（電子下單常見有折扣）</label>
@@ -283,7 +283,7 @@
       <button class="copybtn" id="copyBtn" type="button">📋 複製推廣碼 XLINRJ</button>
     </div>
 
-    <p class="note">成本算法：成交金額 = 股價 × 股數；手續費 = 成交金額 × 0.1425% × 折扣（最低 20 元），買、賣各一次；證交稅僅在賣出時收（股票 0.3%、ETF 0.1%、現股當沖 0.15%）。資金試算：可買股數 = 預算 ÷ 股價（無條件捨去）；潛在淨賺賠已扣除一買一賣的手續費與證交稅（依上方折扣與標的類型），風險比依淨賺賠計算。</p>
+    <p class="note">成本算法：成交金額 = 股價 × 股數；手續費 = 成交金額 × 0.1425% × 折扣（低消：整張 20 元、零股 1 元，實際依券商），買、賣各一次；證交稅僅在賣出時收（股票 0.3%、ETF 0.1%、現股當沖 0.15%）。資金試算：可買股數 = 預算 ÷ 股價（無條件捨去）；潛在淨賺賠已扣除一買一賣的手續費與證交稅（依上方折扣與標的類型），風險比依淨賺賠計算。</p>
     <p class="disc">免責聲明：本工具僅供教育與資訊參考，<b>不構成投資建議或任何證券買賣推薦</b>，也不推薦任何特定股票。各券商手續費低消與計算方式可能略有差異，實際費用以你的券商與主管機關最新公告為準；投資有風險，請自行評估審慎判斷。</p>
   </div>
   <p class="foot">新手買股全攻略</p>
@@ -447,8 +447,9 @@ var HIST_KEY  = "stocktool_hist_v1";
     // 依目前「手續費折扣」與「標的類型」算一買一賣的成本（手續費×2 ＋ 證交稅）
     function tradeCost(sharesN, buyPrice, sellPrice){
       var d=disc; if(d==='custom'){var c=parseFloat(customd.value); d=(c>0)?c/10:1;} else d=Number(d);
-      var bf=Math.max(Math.floor(buyPrice*sharesN*0.001425*d),20);
-      var sf=Math.max(Math.floor(sellPrice*sharesN*0.001425*d),20);
+      var minFee=(unit==='odd')?1:20;
+      var bf=Math.max(Math.floor(buyPrice*sharesN*0.001425*d),minFee);
+      var sf=Math.max(Math.floor(sellPrice*sharesN*0.001425*d),minFee);
       var tx=Math.floor(sellPrice*sharesN*taxRate);
       return bf+sf+tx;
     }
@@ -486,13 +487,15 @@ var HIST_KEY  = "stocktool_hist_v1";
       var shares=(unit==='lot')?q*1000:q;
       var amount=p*shares, d=disc;
       if(d==='custom'){var c=parseFloat(customd.value); d=(c>0)?c/10:1;}
+      var minFee=(unit==='odd')?1:20;   // 整張低消 20 元、零股低消 1 元（常見現況）
       var buy=0,sell=0,tax=0,total=0,bep=0,bepP=0,hit=false;
       if(amount>0){
         var raw=Math.floor(amount*0.001425*d);
-        buy=Math.max(raw,20); sell=Math.max(raw,20); if(raw<20)hit=true;
+        buy=Math.max(raw,minFee); sell=Math.max(raw,minFee); if(raw<minFee)hit=true;
         tax=Math.floor(amount*taxRate); total=buy+sell+tax;
         bep=total/amount*100; bepP=p*(1+total/amount);
       }
+      document.getElementById('minflag').textContent='＊手續費已套用最低 '+minFee+' 元（低消）。';
       document.getElementById('buyFee').textContent = amount>0? fmt(buy)+' 元':'—';
       document.getElementById('sellFee').textContent= amount>0? fmt(sell)+' 元':'—';
       document.getElementById('tax').textContent    = amount>0? fmt(tax)+' 元':'—';
