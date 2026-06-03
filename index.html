@@ -108,6 +108,7 @@
   .pulse{transform:scale(1.04)}
   .breakeven{margin-top:6px;font-size:13.5px;color:var(--txt)}
   .breakeven b{color:var(--cyan)}
+  .grp{font-weight:700;font-size:14px;color:var(--ice);display:flex;align-items:center;gap:8px}
   .rows{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px;display:grid;gap:10px}
   .row{display:flex;align-items:center;justify-content:space-between;font-size:14px}
   .row .k{color:var(--ice);display:flex;align-items:center;gap:8px}
@@ -216,6 +217,7 @@
         <button data-d="1" class="on">無折扣</button><button data-d="0.6">6 折</button>
         <button data-d="0.5">5 折</button><button data-d="0.28">2.8 折</button><button data-d="custom">自訂</button>
       </div>
+      <div class="hint">不確定自己的折扣？電子下單最常見是 <b>6 折</b>，先用它估算即可（各券商促銷不同，實際以你的券商為準）。</div>
       <div class="custom small" id="customwrap">
         <input id="customd" class="num" type="number" inputmode="decimal" placeholder="輸入折數，例如 6.5" min="0.1" max="10" step="0.1">
         <div class="hint">輸入「折數」：6.5 折就打 6.5，越小越便宜</div>
@@ -228,17 +230,28 @@
       </div>
     </div>
     <div class="result">
-      <div class="reslabel">一買一賣，總成本約</div>
+      <div class="grp"><span class="dot" style="background:var(--blue)"></span>① 買進時</div>
+      <div class="rows" style="border-top:none;margin-top:8px;padding-top:0">
+        <div class="row"><span class="k">買進手續費</span><span class="v" id="buyFee">—</span></div>
+        <div class="row tot"><span class="k">買進成本小計</span><span class="v" id="buySub">—</span></div>
+      </div>
+      <div class="hint">買進不收證交稅，所以買進當下其實很便宜。</div>
+
+      <div class="grp" style="margin-top:16px"><span class="dot" style="background:var(--gold)"></span>② 賣出時（以相同股價估算）</div>
+      <div class="rows" style="border-top:none;margin-top:8px;padding-top:0">
+        <div class="row"><span class="k">賣出手續費</span><span class="v" id="sellFee">—</span></div>
+        <div class="row"><span class="k" id="taxName">證交稅（賣出）</span><span class="v" id="tax">—</span></div>
+        <div class="row tot"><span class="k">賣出成本小計</span><span class="v" id="sellSub">—</span></div>
+      </div>
+
+      <div class="grp" style="margin-top:16px">③ 總結</div>
+      <div class="reslabel" style="margin-top:6px">一買一賣，總成本約</div>
       <div class="big" id="total">— <small>元</small></div>
       <div class="breakeven">股價約需上漲 <b id="bep">—</b>，到 <b id="bepPrice">—</b> 才回本。</div>
-      <div class="breakeven" style="margin-top:10px;background:rgba(56,189,248,.10);border:1px solid var(--line);border-radius:10px;padding:10px 12px">💡 <b>買進當下只需付手續費 <span id="buyNow" style="color:var(--cyan)">—</span></b>。證交稅與賣出手續費要等你<b>賣出時</b>才產生，所以買進其實很便宜。</div>
-      <div class="rows">
-        <div class="row"><span class="k"><span class="dot" style="background:var(--blue)"></span>買進手續費</span><span class="v" id="buyFee">—</span></div>
-        <div class="row"><span class="k"><span class="dot" style="background:var(--cyan)"></span>賣出手續費</span><span class="v" id="sellFee">—</span></div>
-        <div class="row"><span class="k"><span class="dot" style="background:var(--gold)"></span><span id="taxName">證交稅（賣出）</span></span><span class="v" id="tax">—</span></div>
-        <div class="row tot"><span class="k">合計成本</span><span class="v" id="totRow">—</span></div>
+      <div class="rows" style="border-top:none;margin-top:8px;padding-top:0">
+        <div class="row tot"><span class="k">合計成本（買進＋賣出）</span><span class="v" id="totRow">—</span></div>
       </div>
-      <div class="flag" id="minflag">＊手續費已套用最低 20 元（低消）。</div>
+      <div class="flag" id="minflag">＊手續費已套用低消。</div>
     </div>
 
     <!-- 區塊 2：資金試算 -->
@@ -498,9 +511,10 @@ var HIST_KEY  = "stocktool_hist_v1";
       }
       document.getElementById('minflag').textContent='＊手續費已套用最低 '+minFee+' 元（低消）。';
       document.getElementById('buyFee').textContent = amount>0? fmt(buy)+' 元':'—';
-      document.getElementById('buyNow').textContent = amount>0? fmt(buy)+' 元':'—';
+      document.getElementById('buySub').textContent = amount>0? fmt(buy)+' 元':'—';
       document.getElementById('sellFee').textContent= amount>0? fmt(sell)+' 元':'—';
       document.getElementById('tax').textContent    = amount>0? fmt(tax)+' 元':'—';
+      document.getElementById('sellSub').textContent= amount>0? fmt(sell+tax)+' 元':'—';
       document.getElementById('totRow').textContent = amount>0? fmt(total)+' 元':'—';
       document.getElementById('bep').textContent    = amount>0? bep.toFixed(2)+'%':'—';
       document.getElementById('bepPrice').textContent= amount>0? fmt(Math.round(bepP*100)/100)+' 元':'—';
