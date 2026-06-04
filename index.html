@@ -467,13 +467,23 @@ var HIST_KEY  = "stocktool_hist_v1";
       var tx=Math.floor(sellPrice*sharesN*taxRate);
       return bf+sf+tx;
     }
+    // 只算買進手續費（含低消），用來預留買進成本
+    function buyFeeOf(n, pr){
+      if(!(n>0&&pr>0)) return 0;
+      var d=disc; if(d==='custom'){var c=parseFloat(customd.value); d=(c>0)?c/10:1;} else d=Number(d);
+      var minFee=(unit==='odd')?1:20;
+      return Math.max(Math.floor(pr*n*0.001425*d),minFee);
+    }
     function calcMoney(){
       var p=parseFloat(price.value)||0, b=parseFloat(budget.value)||0;
       var tg=parseFloat(mTarget.value), st=parseFloat(mStop.value);
-      var shares=(p>0&&b>0)?Math.floor(b/p):0, cost=shares*p;
+      // 可買股數已預留買進手續費（買進成本不超過預算）
+      var shares=0;
+      if(p>0&&b>0){ shares=Math.floor(b/p); while(shares>0 && (shares*p+buyFeeOf(shares,p))>b) shares--; }
+      var cost=shares*p, bfee=buyFeeOf(shares,p), totalCash=cost+bfee;
       document.getElementById('mShares').innerHTML = shares>0? fmt(shares)+' <small>股</small>':'— <small>股</small>';
       document.getElementById('mLots').textContent = shares>0? (shares/1000).toFixed(2):'—';
-      document.getElementById('mCost').textContent = shares>0? fmt(Math.round(cost))+' 元':'—';
+      document.getElementById('mCost').textContent = shares>0? fmt(Math.round(totalCash))+' 元（含買進手續費 '+fmt(bfee)+' 元）':'—';
       var gEl=document.getElementById('mGain'), lEl=document.getElementById('mLoss'), rEl=document.getElementById('mRR'), nEl=document.getElementById('mNote');
       gEl.className='v'; lEl.className='v';
       var netGain=null, netLoss=null;
