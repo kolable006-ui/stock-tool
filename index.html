@@ -263,10 +263,10 @@
     <div class="field small">
       <label class="l">你設定的目標價 / 停損價（選填，自己決定）</label>
       <div class="duo">
-        <div><input id="mTarget" class="num np" type="number" inputmode="decimal" placeholder="目標價" min="0" step="0.5"></div>
-        <div><input id="mStop" class="num np" type="number" inputmode="decimal" placeholder="停損價" min="0" step="0.5"></div>
+        <div><input id="mTarget" class="num np" type="number" inputmode="decimal" placeholder="目標價↑" min="0" step="0.5"></div>
+        <div><input id="mStop" class="num np" type="number" inputmode="decimal" placeholder="停損價↓" min="0" step="0.5"></div>
       </div>
-      <div class="hint">本工具不推薦個股、不替你決定價格；這兩個數字由你自己設定。</div>
+      <div class="hint"><b>目標價</b>＝想賣出獲利的價（要<b>高於</b>買價）；<b>停損價</b>＝跌到就認賠的價（要<b>低於</b>買價）。本工具不推薦個股，價格由你自己設定。</div>
     </div>
     <div class="result blue">
       <div class="reslabel">用這筆預算，目前股價可買約</div>
@@ -486,23 +486,27 @@ var HIST_KEY  = "stocktool_hist_v1";
       document.getElementById('mCost').textContent = shares>0? fmt(Math.round(totalCash))+' 元（含買進手續費 '+fmt(bfee)+' 元）':'—';
       var gEl=document.getElementById('mGain'), lEl=document.getElementById('mLoss'), rEl=document.getElementById('mRR'), nEl=document.getElementById('mNote');
       gEl.className='v'; lEl.className='v';
-      var netGain=null, netLoss=null;
-      if(shares>0 && tg>0){ netGain=(tg-p)*shares - tradeCost(shares,p,tg); var gp=(netGain)/(b||cost)*100;
+      var netGain=null, netLoss=null, warns=[];
+      // 目標價：必須「高於」買進價才有獲利空間
+      if(shares>0 && tg>0 && tg>p){ netGain=(tg-p)*shares - tradeCost(shares,p,tg); var gp=(netGain)/(b||cost)*100;
         gEl.textContent=(netGain>=0?'+':'')+fmt(Math.round(netGain))+' 元 ('+(gp>=0?'+':'')+gp.toFixed(1)+'%)'; gEl.classList.add(netGain>=0?'pos':'neg'); }
-      else gEl.textContent='—';
+      else { gEl.textContent='—'; if(shares>0 && tg>0 && tg<=p) warns.push('「目標價」要<b>高於</b>你的買進價 '+fmt(p)+' 元才會獲利（賣得比買貴）。'); }
+      // 停損價：必須「低於」買進價（跌到才認賠）
       var lossPct=null;
-      if(shares>0 && st>0){ netLoss=(p-st)*shares + tradeCost(shares,p,st); lossPct=b>0?netLoss/b*100:null;
+      if(shares>0 && st>0 && st<p){ netLoss=(p-st)*shares + tradeCost(shares,p,st); lossPct=b>0?netLoss/b*100:null;
         lEl.textContent='-'+fmt(Math.round(netLoss))+' 元'+(lossPct!=null?'（佔預算 '+lossPct.toFixed(1)+'%）':''); lEl.classList.add('neg'); }
-      else lEl.textContent='—';
+      else { lEl.textContent='—'; if(shares>0 && st>0 && st>=p) warns.push('「停損價」要<b>低於</b>你的買進價 '+fmt(p)+' 元（跌到那個價才認賠出場）。'); }
       if(netGain!=null && netLoss!=null && netLoss>0){ rEl.textContent=(netGain/netLoss).toFixed(2)+' : 1'; }
       else rEl.textContent='—';
-      if(lossPct!=null){
+      if(warns.length){
+        nEl.innerHTML = '⚠️ '+warns.join('<br>⚠️ ');
+      } else if(lossPct!=null){
         nEl.textContent = (lossPct>2
           ? '⚠️ 此設定下單筆潛在淨虧損約佔預算 '+lossPct.toFixed(1)+'%，高於常見「單筆風險 ≤ 2%」的資金控管原則，可考慮減少股數或調整停損（通用知識，非建議）。'
           : '✓ 此設定下單筆潛在淨虧損約佔預算 '+lossPct.toFixed(1)+'%，在常見「單筆風險 ≤ 2%」原則內。')
           + ' 以上賺賠已扣除一買一賣的手續費與證交稅（依上方折扣與標的類型）。';
       } else {
-        nEl.textContent='填入目標價與停損價，即可看到「已扣手續費與證交稅」的淨賺賠與風險比。所有價格由你自己決定。';
+        nEl.textContent='填入目標價（高於買價）與停損價（低於買價），即可看到「已扣手續費與證交稅」的淨賺賠與風險比。';
       }
     }
 
