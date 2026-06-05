@@ -228,6 +228,7 @@
       <div class="seg gold" id="typeseg">
         <button data-t="0.003" class="on">一般股票</button><button data-t="0.001">ETF</button><button data-t="0.0015">現股當沖</button>
       </div>
+      <div class="hint" id="etfNote" style="display:none">📌 ETF 另有每年「內扣管理費」（各檔約 0.2%～1%，從淨值內扣、非交易時另外收取），長期持有要留意；此處只算交易成本。</div>
     </div>
     <div class="result">
       <div class="grp"><span class="dot" style="background:var(--blue)"></span>① 買進時</div>
@@ -555,7 +556,8 @@ var HIST_KEY  = "stocktool_hist_v1";
       [].forEach.call(typeseg.children,function(x){x.classList.remove('on')});b.classList.add('on');
       taxRate=parseFloat(b.dataset.t);
       typeLabel=(taxRate===0.001?'ETF':taxRate===0.0015?'當沖':'一般股票');
-      document.getElementById('taxName').textContent=(taxRate===0.001?'證交稅・ETF（賣出）':taxRate===0.0015?'證交稅・當沖（賣出）':'證交稅（賣出）');calc();});
+      document.getElementById('taxName').textContent=(taxRate===0.001?'證交稅・ETF（賣出）':taxRate===0.0015?'證交稅・當沖（賣出）':'證交稅（賣出）');
+      document.getElementById('etfNote').style.display=(taxRate===0.001?'block':'none');calc();});
     [price,lots,customd].forEach(function(el){el.addEventListener('input',calc)});
     [budget,mTarget,mStop].forEach(function(el){el.addEventListener('input',calcMoney)});
     calc();
